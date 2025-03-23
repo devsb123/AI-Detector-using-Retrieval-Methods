@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, redirect, url_for
-from gensim.models import Word2Vec
 import sqlite3
 import numpy as np
 import json
@@ -10,11 +9,8 @@ import math
 
 app = Flask(__name__)
 
-itemNum = 0
-currentText = ""
-lstOfText = []
-currentVectorEncodedText = []
-lstOfVectorEncodedText = []
+currentStudentGivenText = ""
+lstOfAllDocuments = []
 promptToGenerateResponsesOn = ""
 minimumWordCount = 200
 maximumWordCount = 500
@@ -23,11 +19,6 @@ aiGenerated = False
 entryThatMostCloselyMatchesInputText = ""
 aiGeneratedAsAString = ""
 highestCosineSimilarityScore = 0
-
-def decode_if_bytes(data):
-    if isinstance(data, bytes):
-        data = data.decode('utf-8')
-    return data
 
 def get_db_connection():
     conn = sqlite3.connect('database.db')
@@ -47,22 +38,22 @@ def routeForResults():
     if request.method == 'POST':
         global itemNum 
         global currentText
-        global lstOfText
+        global lstOfAllDocuments
         global currentVectorEncodedText
         global lstOfVectorEncodedText
 
         itemNum += 1
         currentText = request.form.get("textEntered")
-        lstOfText.append(currentText)
+        lstOfAllDocuments.append(currentText)
 
-        #if(lstOfText == []):
+        #if(lstOfAllDocuments == []):
            # currentVectorEncodedText = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
            # lstOfVectorEncodedText = []
 
         #preprocess the documents, and create TaggedDocuments
         tagged_data = [TaggedDocument(words=word_tokenize(doc.lower()),
                                     tags=[str(i)]) for i,
-                    doc in enumerate(lstOfText)]
+                    doc in enumerate(lstOfAllDocuments)]
         
         #train the Doc2vec model
         model = Doc2Vec(vector_size=25,
@@ -74,10 +65,10 @@ def routeForResults():
         
         #get the document vectors
         document_vectors = [model.infer_vector(
-            word_tokenize(doc.lower())) for doc in lstOfText]
+            word_tokenize(doc.lower())) for doc in lstOfAllDocuments]
         
         #print the document vectors
-        for i, doc in enumerate(lstOfText):
+        for i, doc in enumerate(lstOfAllDocuments):
             print("Document", i+1, ":", doc)
             print("Vector:", document_vectors[i])
             print()
@@ -109,14 +100,12 @@ def routeForResults():
         global maximumWordCount
         maximumWordCount = int(request.form.get("maxWordCount"))
 
+        global currentStudentGivenText
+        global lstOfAllDocuments
 
-        global currentText
-        global lstOfText
-        global lstOfVectorEncodedText
+        currentStudentGivenText = request.form.get("inputText")
 
-        currentText = request.form.get("inputText")
-
-        lstOfText = [
+        lstOfAllDocuments = [
             "Space exploration should continue to be a priority for governments because it drives technological advancements that benefit life on Earth. Many innovations, such as satellite communication, GPS, and advancements in materials science, have emerged from space research. These breakthroughs have widespread applications that impact industries like healthcare, agriculture, and environmental monitoring. Additionally, space exploration fosters international collaboration and the pursuit of knowledge, allowing nations to come together for the greater good and address universal challenges like climate change. Moreover, space exploration is essential for the future of humanity. With Earth's resources being finite and the population growing, exploring other planets and celestial bodies may offer opportunities for resource extraction, colonization, or even survival in the event of a global catastrophe. Investing in space exploration today is an investment in the long-term future of humanity, ensuring we are prepared for challenges that may arise beyond our planet.",
             "While space exploration has provided significant technological advancements, it should not be prioritized over more immediate and pressing issues on Earth. Governments should focus on addressing problems like poverty, climate change, and healthcare rather than spending billions on projects that may not have tangible benefits for people today. The funds spent on space missions could be better allocated to improving quality of life and addressing inequalities worldwide, especially in developing countries where basic needs remain unmet. Furthermore, space exploration, though exciting, is an expensive endeavor that often benefits large corporations or specific scientific fields rather than the general public. The vast amount of resources required for space exploration could be seen as a luxury when many countries face urgent social, economic, and environmental challenges. While the long-term potential of space exploration is undeniable, governments should first ensure that they are addressing the needs of their citizens before investing heavily in space endeavors.",
             "Space exploration should continue to be a priority for governments because it drives innovation and scientific progress. Developing technologies for space missions often leads to breakthroughs that benefit industries on Earth, such as advances in telecommunications, healthcare, and clean energy. For instance, satellite technology, which was initially developed for space exploration, now plays a crucial role in weather forecasting, GPS navigation, and global communication. Moreover, exploring space allows us to address profound scientific questions, such as understanding the origins of life, investigating other planets for potential habitability, and uncovering the mysteries of the universe. Investing in space exploration also fosters international collaboration and inspires future generations. Space missions often bring together scientists and engineers from around the world, strengthening diplomatic relations and uniting humanity in the pursuit of shared goals. Additionally, the achievements of space programs can ignite a passion for science, technology, engineering, and mathematics (STEM) in young minds, encouraging them to pursue careers in these fields. Ultimately, prioritizing space exploration ensures that governments remain at the forefront of innovation, addressing both immediate needs and long-term challenges.",
@@ -125,13 +114,13 @@ def routeForResults():
             "While space exploration has its merits, governments should focus on addressing pressing issues on Earth, such as poverty, healthcare, education, and climate change. These challenges require significant financial resources and immediate attention, and diverting funds to space exploration could delay progress in solving them. For example, the cost of a single space mission could fund numerous social programs or infrastructure projects that directly improve the quality of life for millions of people. Prioritizing Earth-based issues ensures that governments meet their primary responsibility: serving their citizens and improving societal well-being. Moreover, space exploration is often driven by geopolitical competition rather than genuine scientific curiosity, leading to wasteful spending and duplication of efforts. Instead of focusing on space, governments could invest in sustainable technologies and environmental conservation to address climate change, which poses a more immediate threat to humanity. While space exploration may offer long-term benefits, it is a luxury that many nations cannot afford, especially developing countries struggling with basic needs. Redirecting resources toward solving Earth’s problems would create a more equitable and sustainable future for all.",
             "Space exploration should absolutely continue to be a priority for governments because it drives technological innovation and economic growth. The pursuit of space has historically led to breakthroughs that benefit society as a whole—think of satellite technology, which powers global communication, weather forecasting, and GPS systems. Projects like NASA’s Apollo program or SpaceX’s reusable rockets demonstrate how space ambitions push engineering and science forward, often spilling over into other industries. Governments that invest in space aren’t just chasing stars; they’re seeding advancements that can improve life on Earth, from renewable energy solutions to medical technologies inspired by space research. Beyond practical benefits, space exploration taps into a fundamental human need to explore and understand our place in the universe. It’s not just about planting flags on Mars or mining asteroids—it’s about answering big questions: Are we alone? Can humanity survive beyond Earth? These endeavors inspire generations, foster international collaboration, and remind us of what’s possible when we think beyond our planet. In a world facing climate change and resource scarcity, space could also offer long-term solutions, like off-planet habitats or resource extraction. Governments should prioritize it because it’s an investment in both our present and our future.",
             "Space exploration should not remain a government priority when there are pressing issues here on Earth that demand attention and funding. Billions are poured into missions to Mars or distant telescopes while millions lack basic necessities like clean water, healthcare, or education. The argument that space tech trickles down to everyday life is shaky—most innovations could be pursued directly without the astronomical (pun intended) costs of launching rockets. Governments should focus on solving climate change, poverty, and infrastructure decay rather than chasing cosmic dreams that benefit only a small elite of scientists and corporations. Moreover, the risks and uncertainties of space exploration make it a questionable investment. Missions fail, costing taxpayers dearly, and the promise of colonizing other planets remains speculative at best—Earth’s problems won’t vanish by fleeing to Mars. Private companies like SpaceX are already taking up the slack, so why should governments divert resources from immediate human needs to duplicate efforts? Space can wait; it’s been there for billions of years. Right now, the priority should be stabilizing and sustaining the only home we currently have—Earth—before we gamble on the stars.",
-            currentText
+            currentStudentGivenText
         ]
 
         #preprocess the documents, and create TaggedDocuments
         tagged_data = [TaggedDocument(words=word_tokenize(doc.lower()),
                                     tags=[str(i)]) for i,
-                    doc in enumerate(lstOfText)]
+                    doc in enumerate(lstOfAllDocuments)]
         
         #train the Doc2vec model
         model = Doc2Vec(vector_size=25,
@@ -143,35 +132,34 @@ def routeForResults():
         
         #get the document vectors
         document_vectors = [model.infer_vector(
-            word_tokenize(doc.lower())) for doc in lstOfText]
-        document_vectors_asAnArray = [vector.tolist() for vector in document_vectors]
+            word_tokenize(doc.lower())) for doc in lstOfAllDocuments]
+        listFormatForDocVectors = [vector.tolist() for vector in document_vectors]
 
-        """for i, doc in enumerate(document_vectors_asAnArray[0:len(document_vectors_asAnArray)-1]):
-            conn = get_db_connection()
-            itemNum = i + 1
-            conn.execute("INSERT INTO textDatabase (itemNum, textEntered, encodedVector) VALUES (?, ?, ?)", (itemNum, lstOfText[i], doc))               
-            conn.commit()"""
+        conn = get_db_connection()
+        for i, vectorArray in enumerate(listFormatForDocVectors[0:len(listFormatForDocVectors)-1]):
+            conn.execute("INSERT INTO textDatabase (itemNum, textEntered, encodedVectorEntry1, encodedVectorEntry2, encodedVectorEntry3, encodedVectorEntry4, encodedVectorEntry5, encodedVectorEntry6, encodedVectorEntry7, encodedVectorEntry8, encodedVectorEntry9, encodedVectorEntry10, encodedVectorEntry11, encodedVectorEntry12, encodedVectorEntry13, encodedVectorEntry14, encodedVectorEntry15, encodedVectorEntry16, encodedVectorEntry17, encodedVectorEntry18, encodedVectorEntry19, encodedVectorEntry20, encodedVectorEntry21, encodedVectorEntry22, encodedVectorEntry23, encodedVectorEntry24, encodedVectorEntry25) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ((i+1, lstOfAllDocuments[i], vectorArray[0], vectorArray[1], vectorArray[2], vectorArray[3], vectorArray[4], vectorArray[5], vectorArray[6], vectorArray[7], vectorArray[8], vectorArray[9], vectorArray[10], vectorArray[11], vectorArray[12], vectorArray[13], vectorArray[14], vectorArray[15], vectorArray[16], vectorArray[17], vectorArray[18], vectorArray[19], vectorArray[20], vectorArray[21], vectorArray[22], vectorArray[23], vectorArray[24])))
+               
+        conn.commit()
+        data = conn.execute('SELECT * FROM textDatabase').fetchall()
+        conn.close()
         
+        database_encoded_vectors = []
+        for row in data:
+            encoded_vector = row[2:27]
+            database_encoded_vectors.append(list(encoded_vector))
         
-        
-        lstOfVectorEncodedText = document_vectors
         currentVectorEncodedText = document_vectors[-1]
-        currentVectorEncodedTextAsAnArray = currentVectorEncodedText.tolist()
+        studentTextVectorAsAList = currentVectorEncodedText.tolist()
 
-        squareRootOfCurrentVectorEncodedText = [i*i for i in currentVectorEncodedText]     
-        sumOfSquareRootCurrentVectorEncodedText = sum(squareRootOfCurrentVectorEncodedText)
-        magnitudeOfInputVector = math.sqrt(sumOfSquareRootCurrentVectorEncodedText)
+        squaredCurrentVectorEncodedText = [i*i for i in studentTextVectorAsAList]   
+        sumOfSquaredCurrentVectorEncodedText = sum(squaredCurrentVectorEncodedText)
+        magnitudeOfInputVector = math.sqrt(sumOfSquaredCurrentVectorEncodedText)
 
 
         cosineSimilarityScores = []
-
-        print(document_vectors_asAnArray[0])
-        print(lstOfText)
         
-
-
-        for paragraph in document_vectors_asAnArray[0:len(document_vectors_asAnArray)-1]:
-            dotProduct =  sum([currentVectorEncodedTextAsAnArray[index] * value for index, value in enumerate(paragraph)])
+        for paragraph in database_encoded_vectors:
+            dotProduct =  sum([studentTextVectorAsAList[index] * value for index, value in enumerate(paragraph)])
             magnitudeOfParagraph = math.sqrt(sum([i * i for i in paragraph]))
             cosineSimilarityScores.append(dotProduct / (magnitudeOfParagraph * magnitudeOfInputVector))
 
@@ -181,7 +169,7 @@ def routeForResults():
         highestCosineSimilarityScore = max(cosineSimilarityScores)
         indexOfHighestCosineSimilarityScore = cosineSimilarityScores.index(highestCosineSimilarityScore)
         global entryThatMostCloselyMatchesInputText
-        entryThatMostCloselyMatchesInputText = lstOfText[indexOfHighestCosineSimilarityScore]
+        entryThatMostCloselyMatchesInputText = lstOfAllDocuments[indexOfHighestCosineSimilarityScore]
         global threshold
         global aiGenerated
         if(highestCosineSimilarityScore >= threshold):
@@ -194,7 +182,7 @@ def routeForResults():
 
 @app.route('/aiGenOrNot')
 def routeForAIGenOrNot():
-    return render_template("finalScreen.html", closestEntry = entryThatMostCloselyMatchesInputText, AIGEN = aiGeneratedAsAString, thres = threshold, cosSimilarity = highestCosineSimilarityScore, inputText = currentText)
+    return render_template("finalScreen.html", closestEntry = entryThatMostCloselyMatchesInputText, AIGEN = aiGeneratedAsAString, thres = threshold, cosSimilarity = highestCosineSimilarityScore, inputText = currentStudentGivenText)
 
 app.debug = True
 if __name__ == '__main__':
