@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Data of all the entries</title>
+  <style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f9f9f9;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        
+    }
+    .container {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        width: 80%;
+        max-width: 600px;
+        text-align: center;
+    }
+    h1 {
+        color: #333333;
+        font-size: 24px;
+    }
+    ul {
+        list-style-type: none;
+        padding: 0;
+    }
+    li {
+        background: #f4f4f4;
+        margin: 10px 0;
+        padding: 10px;
+        border: 1px solid #cccccc;
+        border-radius: 4px;
+        text-align: left;
+    }
+    .entry-title {
+        font-weight: bold;
+        color: #007BFF;
+    }
+    .entry-content {
+        color: #555555;
+        margin-bottom: 5px;
+    }
+    a {
+        text-decoration: none;
+        color: #007BFF;
+        display: inline-block;
+        margin-top: 20px;
+    }
+    a:hover {
+        text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Data for each entry in the table</h1>
+    <ul>
+      {%  for c in d %}
+      <li>
+        <div class="entry-title">The entry's number:</div>
+        <div class="entry-content">{{c[0]}}</div>
+
+        <div class="entry-title">The text that was given by the user:</div>
+        <div class="entry-content">{{c[1]}}</div>
+
+        <div class="entry-title">The encoded vector:</div>
+        <div class="entry-content">{{c[2]}}</div>
+      </li>
+      {% endfor %}
+    </ul>
+    <a href="/">Link back to adding another entry</a>
+  </div>
+</body>
+</html>
