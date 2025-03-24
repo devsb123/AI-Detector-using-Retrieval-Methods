@@ -5,8 +5,6 @@ This project is for teachers or other people within the academic sphere that wis
 2. Navigate to the directory: `cd AI-Detector-using-Retrieval-Methods`
 3. Install dependencies: `npm install`
 ## Usage
-### Instructions to Run the Code
-
 1. Run the following commands in your terminal:
    ```bash
    python reset_db.py
