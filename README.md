@@ -4,7 +4,7 @@ This project is for teachers or other people within the academic sphere that wis
 1. Clone the repo:  `git clone https://github.com/devsb123/AI-Detector-using-Retrieval-Methods`
 2. Navigate to the directory: `cd AI-Detector-using-Retrieval-Methods`
 3. Install dependencies: `npm install`
-## Usage
+#### Usage
 For running the code simply run:
 python reset_db.py
 python app.py 
