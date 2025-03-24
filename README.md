@@ -5,7 +5,7 @@ This project is for teachers or other people within the academic sphere that wis
 2. Navigate to the directory: `cd AI-Detector-using-Retrieval-Methods`
 3. Install dependencies: `npm install`
 ## Usage
-For running the code simply do:
+For running the code simply run:
 python reset_db.py
 python app.py 
 This will generate a web server 
