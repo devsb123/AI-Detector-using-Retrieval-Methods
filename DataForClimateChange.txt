@@ -17,4 +17,7 @@ Technology can play a pivotal role in tackling climate change by accelerating th
 
 INPUT TEXT: Technology can play a pivotal role in addressing climate change by advancing clean energy solutions, improving energy efficiency, and reducing emissions. Renewable energy technologies, such as solar, wind, and hydropower, can replace fossil fuels, while innovations in energy storage and grid management enhance reliability and reduce waste. Additionally, carbon capture and storage (CCS) can help mitigate emissions from industrial sources, and smart agriculture technologies can optimize resource use and reduce environmental impact. Furthermore, data analytics, AI, and IoT can monitor environmental changes in real-time, enabling informed decision-making and fostering more sustainable practices across industries. By leveraging these technologies, we can create a more resilient, low-carbon future.
 
+QUESTION: 
+How should technology be used to address the challenges of climate change?
+
 

@@ -1,3 +1,4 @@
+#import the required libraries
 from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
 import numpy as np
@@ -6,9 +7,12 @@ import nltk
 from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 from nltk.tokenize import word_tokenize
 import math
+from openai import OpenAI
+client = OpenAI()
 
 app = Flask(__name__)
 
+#initialize important variables that will be used throughout the program
 currentStudentGivenText = ""
 lstOfAllDocuments = []
 promptToGenerateResponsesOn = ""
@@ -20,92 +24,52 @@ entryThatMostCloselyMatchesInputText = ""
 aiGeneratedAsAString = ""
 highestCosineSimilarityScore = 0
 
+#connect to the SQL database
 def get_db_connection():
     conn = sqlite3.connect('database.db')
     conn.row_factory = sqlite3.Row
     return conn
 
+#make a route for the first screen that the user sees
 @app.route('/')
 def initialWebpage():
     return render_template('startingTemplate.html')
 
-#@app.route('/')
-#def index():
-    #return render_template('index.html')
-
-"""@app.route('/results', methods=['POST'])
-def routeForResults():
-    if request.method == 'POST':
-        global itemNum 
-        global currentText
-        global lstOfAllDocuments
-        global currentVectorEncodedText
-        global lstOfVectorEncodedText
-
-        itemNum += 1
-        currentText = request.form.get("textEntered")
-        lstOfAllDocuments.append(currentText)
-
-        #if(lstOfAllDocuments == []):
-           # currentVectorEncodedText = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-           # lstOfVectorEncodedText = []
-
-        #preprocess the documents, and create TaggedDocuments
-        tagged_data = [TaggedDocument(words=word_tokenize(doc.lower()),
-                                    tags=[str(i)]) for i,
-                    doc in enumerate(lstOfAllDocuments)]
-        
-        #train the Doc2vec model
-        model = Doc2Vec(vector_size=25,
-                        min_count=2, epochs=80)
-        model.build_vocab(tagged_data)
-        model.train(tagged_data,
-                    total_examples=model.corpus_count,
-                    epochs=model.epochs)
-        
-        #get the document vectors
-        document_vectors = [model.infer_vector(
-            word_tokenize(doc.lower())) for doc in lstOfAllDocuments]
-        
-        #print the document vectors
-        for i, doc in enumerate(lstOfAllDocuments):
-            print("Document", i+1, ":", doc)
-            print("Vector:", document_vectors[i])
-            print()
-        
-        lstOfVectorEncodedText = document_vectors
-        currentVectorEncodedText = document_vectors[-1]
-        currentVectorEncodedJSonString = json.dumps(currentVectorEncodedText.tolist())
-
-
-        conn = get_db_connection()
-        conn.execute("INSERT INTO textDatabase (itemNum, textEntered, encodedVector) VALUES (?, ?, ?)", (itemNum, currentText, currentVectorEncodedJSonString))
-        for i, encodedVector in enumerate(lstOfVectorEncodedText):
-            encodedVectorJsonString = json.dumps(encodedVector.tolist())
-            conn.execute("UPDATE textDatabase SET encodedVector = ? WHERE itemNum = ?", (encodedVectorJsonString, i+1))
-        conn.commit()
-        data = conn.execute('SELECT * FROM textDatabase').fetchall()
-        conn.close()
-
-        easierToDisplayData = [(row["itemNum"], row["textEntered"], json.loads(decode_if_bytes(row["encodedVector"]))) for row in data]
-        return render_template('results.html', d = easierToDisplayData)"""
-
+#this is a second route for after the user enters in intial information
 @app.route('/results', methods=['POST'])
 def routeForResults():
     if request.method == 'POST':
+        #gather the important variables values
         global promptToGenerateResponsesOn
         promptToGenerateResponsesOn = request.form.get("textEntered")
         global minimumWordCount
         minimumWordCount = int(request.form.get("minWordCount"))
         global maximumWordCount
         maximumWordCount = int(request.form.get("maxWordCount"))
+        global numberOfResponsesToGenerate
+        numberOfResponsesToGenerate = 10
 
         global currentStudentGivenText
         global lstOfAllDocuments
 
         currentStudentGivenText = request.form.get("inputText")
 
-        lstOfAllDocuments = [
+        global totalPromptToGiveGPT
+        totalPromptToGiveGPT = promptToGenerateResponsesOn + f"Give a response between {minimumWordCount} and {maximumWordCount} words."
+
+        #use GPT's API to get text to fill up the database
+        completion = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "user",
+                "content": totalPromptToGiveGPT
+            }],
+        n = numberOfResponsesToGenerate)
+
+        lstOfAllDocuments = [response.message.content for response in completion.choices] + [currentStudentGivenText]
+
+        """lstOfAllDocuments = [
             "Mandatory school uniforms can foster a sense of equality among students by reducing visible socioeconomic differences. When everyone wears the same attire, it minimizes the impact of brand-consciousness or pressure to wear expensive clothing, helping to create a more inclusive environment. This can lead to better interpersonal relationships and reduce bullying based on appearance or financial status, allowing students to focus more on their education. Additionally, school uniforms promote discipline and a sense of identity within the school community. They encourage students to adhere to a code of conduct and represent their institution with pride. Uniforms can also save time for families in the morning, as children don’t have to decide what to wear each day, making the start of the day less stressful. However, critics argue that enforcing uniforms stifles personal expression and individuality. Clothing is often a way for students to showcase their personality, and mandatory uniforms can take away this avenue of self-expression. While they may create uniformity, they don’t address deeper issues related to inequality or peer pressure in other aspects of school life.",
             "Opponents of mandatory school uniforms often highlight the importance of individuality and self-expression. Clothing choices allow students to showcase their unique identities, cultural backgrounds, and creativity. Forcing everyone to wear the same outfit may suppress this critical aspect of personal development, especially during the formative school years. Another argument against uniforms is the potential financial burden they impose on families. Although uniforms are often touted as cost-effective, the specific requirements for certain styles or brands can become expensive. For families with multiple children or limited incomes, this additional expense could be challenging, negating the purported equality uniforms aim to achieve. On the other hand, advocates of uniforms argue that they can minimize distractions and foster discipline. While these benefits are worth considering, critics believe that schools should instead focus on addressing the root causes of behavioral issues or academic performance, rather than implementing a dress code that may only serve as a superficial solution.",
             "The debate over school uniforms often centers on finding the right balance between equality and individuality. Proponents argue that uniforms create a level playing field by reducing socioeconomic disparities and fostering a sense of community. This can enhance focus on academics and extracurricular activities, as students may be less concerned about their appearance or fashion trends. Nevertheless, it’s essential to recognize that mandatory uniforms may not suit every school or student population. In creative or diverse communities, allowing students to wear their own clothes could better reflect their individuality and cultural identity. A compromise, such as a relaxed or partial uniform policy, could accommodate the need for both unity and self-expression. Ultimately, the success of school uniforms depends on thoughtful implementation and feedback from students, parents, and educators. Policies could include options for diverse cultural attire or cost-effective measures for families. By addressing these concerns, schools can aim to achieve a balance that supports both academic excellence and personal growth.",
@@ -117,7 +81,9 @@ def routeForResults():
             "School uniforms shouldn’t be mandatory because they don’t address the root causes of the issues they aim to solve, like bullying or distraction. While they might level the playing field superficially, determined bullies will find other ways to target peers, such as through accessories or verbal harassment. Forcing uniformity might just mask problems rather than resolve them. A potential benefit, though, is improved focus in the classroom. Without the distraction of flashy or revealing clothing, students and teachers might stay more engaged in lessons. Studies have suggested that uniforms can create a more serious academic tone, which could subtly boost concentration and learning outcomes over time. Yet, a significant drawback is the lack of evidence proving their effectiveness. Research on uniforms often shows mixed results—some schools report better discipline, others see no change. This inconsistency suggests that mandating them might be an unnecessary imposition, especially if the benefits are anecdotal rather than universal, leaving schools to weigh tradition against practicality.",
             "Mandatory school uniforms have been a topic of debate for years, with proponents arguing that they promote equality and reduce distractions. One of the primary benefits is that uniforms can help minimize socioeconomic disparities among students by ensuring everyone dresses similarly, reducing pressure to wear expensive or trendy clothing. Additionally, uniforms can foster a sense of belonging and school pride, creating a more unified and disciplined environment. By removing the focus on fashion, students may also concentrate better on their studies, and uniforms can simplify morning routines for both parents and children. However, there are also significant drawbacks to mandatory uniforms. Critics argue that uniforms stifle individuality and self-expression, which are important aspects of personal development, especially for teenagers. Forcing students to wear the same clothing every day may lead to resentment or a lack of creativity. Furthermore, uniforms can be costly for families, particularly if they are required to purchase multiple sets or specific brands. Some students may also find uniforms uncomfortable or impractical, which could negatively impact their school experience. Ultimately, whether school uniforms should be mandatory depends on the specific context and goals of a school community. While uniforms can promote equality and reduce distractions, they may also limit personal expression and impose financial burdens. Schools should carefully weigh these pros and cons and consider alternative approaches, such as dress codes, which balance uniformity with flexibility. Engaging students, parents, and teachers in the decision-making process can help ensure that any policy adopted meets the needs of the entire community.",
             currentStudentGivenText
-        ]
+        ]"""
+
+        #run the Doc2Vec model to get vector representation of the documents 
 
         #preprocess the documents, and create TaggedDocuments
         tagged_data = [TaggedDocument(words=word_tokenize(doc.lower()),
@@ -137,6 +103,7 @@ def routeForResults():
             word_tokenize(doc.lower())) for doc in lstOfAllDocuments]
         listFormatForDocVectors = [vector.tolist() for vector in document_vectors]
 
+        #insert the vectors and the documents into the database
         conn = get_db_connection()
         for i, vectorArray in enumerate(listFormatForDocVectors[0:len(listFormatForDocVectors)-1]):
             conn.execute("INSERT INTO textDatabase (itemNum, textEntered, encodedVectorEntry1, encodedVectorEntry2, encodedVectorEntry3, encodedVectorEntry4, encodedVectorEntry5, encodedVectorEntry6, encodedVectorEntry7, encodedVectorEntry8, encodedVectorEntry9, encodedVectorEntry10, encodedVectorEntry11, encodedVectorEntry12, encodedVectorEntry13, encodedVectorEntry14, encodedVectorEntry15, encodedVectorEntry16, encodedVectorEntry17, encodedVectorEntry18, encodedVectorEntry19, encodedVectorEntry20, encodedVectorEntry21, encodedVectorEntry22, encodedVectorEntry23, encodedVectorEntry24, encodedVectorEntry25) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", ((i+1, lstOfAllDocuments[i], vectorArray[0], vectorArray[1], vectorArray[2], vectorArray[3], vectorArray[4], vectorArray[5], vectorArray[6], vectorArray[7], vectorArray[8], vectorArray[9], vectorArray[10], vectorArray[11], vectorArray[12], vectorArray[13], vectorArray[14], vectorArray[15], vectorArray[16], vectorArray[17], vectorArray[18], vectorArray[19], vectorArray[20], vectorArray[21], vectorArray[22], vectorArray[23], vectorArray[24])))
@@ -152,6 +119,8 @@ def routeForResults():
         
         currentVectorEncodedText = document_vectors[-1]
         studentTextVectorAsAList = currentVectorEncodedText.tolist()
+
+        #Do calculations involving Cosine Similarity to find the closest entry in the database
 
         squaredCurrentVectorEncodedText = [i*i for i in studentTextVectorAsAList]   
         sumOfSquaredCurrentVectorEncodedText = sum(squaredCurrentVectorEncodedText)
@@ -180,8 +149,10 @@ def routeForResults():
         aiGeneratedAsAString = "not AI generated"
         if(aiGenerated == True):
             aiGeneratedAsAString = "AI Generated"
+        #Second Screen, confirms what user had typed in
         return render_template('secondScreen.html', prompt = promptToGenerateResponsesOn, minWords = minimumWordCount, maxWords = maximumWordCount)
 
+#render a template for whether it was AI Generated or not, using Cosine Similarity Score and Threshold
 @app.route('/aiGenOrNot')
 def routeForAIGenOrNot():
     return render_template("finalScreen.html", closestEntry = entryThatMostCloselyMatchesInputText, AIGEN = aiGeneratedAsAString, thres = threshold, cosSimilarity = highestCosineSimilarityScore, inputText = currentStudentGivenText)
