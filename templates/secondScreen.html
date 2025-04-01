@@ -5,7 +5,7 @@
   <style>
     body {
       font-family: 'Arial', sans-serif;
-      background-color: #f9f9f9;
+      background-color: #f0f2f5;
       margin: 0;
       padding: 0;
       display: flex;
@@ -15,44 +15,80 @@
     }
     .container {
       background-color: #ffffff;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      padding: 50px;
+      border-radius: 12px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
       width: 80%;
-      max-width: 600px;
+      max-width: 900%;
       text-align: center;
+      transition: 0.3s;
+    }
+    .container-hover{
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
     }
     h1 {
-      color: #333333;
-      font-size: 28px;
+      color: #34495e;
+      font-size: 22px;
       margin-bottom: 20px;
+      font-weight: bold;
     }
     p {
-      color: #555555;
-      font-size: 18px;
+      color: #34495e;
+      font-size: 22px;
       margin-bottom: 30px;
+      line-height: 1.6;
+    }
+    .highlight{
+      font-weight: bold;
+      color: #e74c3c;
+    }
+    hr{
+      border: none;
+      height: 2px;
+      background-color: #ddd;
+      margin: 25px 0;
+    }
+    .button-container{
+      margin-top: 30px;
+      display:flex;
+      justify-content: center;
+      gap:20px;
+      
     }
     a {
       text-decoration: none;
       color: #ffffff;
       background-color: #007BFF;
-      padding: 10px 20px;
-      border-radius: 5px;
-      font-size: 18px;
+      padding: 14px 28px;
+      border-radius: 6px;
+      font-size: 20px;
+      display: inline-block;
+      transition: 0.3s;
     }
     a:hover {
       background-color: #0056b3;
+      transform: scale(1.05);
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Generated Responses</h1>
+    <hr>
     <p>The question you have asked to detect on:</p>
-    <p><strong>{{prompt}}</strong></p>
-    <p> minimum word count: {{minWords}}<br> maximum word count: {{maxWords}}</p>
-    <a href="/">Go Back</a>
-    <a href = "/aiGenOrNot"> Check if text was AI gen or not</a>
+    <p class="highlight"> {{prompt}} </p>
+    <hr>
+    <p> 
+      minimum word count: <span class="highlight" > {{minWords}} </span> 
+    </p>
+    <p>
+      maximum word count: <span class="highlight" > {{maxWords}} </span> 
+    </p> 
+    <hr>
+    <div class="button-container">
+      <a href="/">Go Back</a>
+      <a href = "/aiGenOrNot"> Check if text was AI gen or not</a>
+    </div>
   </div>
 </body>
 </html>

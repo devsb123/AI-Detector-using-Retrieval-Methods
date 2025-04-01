@@ -5,7 +5,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f9f9f9;
+            background-color: #f0f2f5;
             margin: 0;
             padding: 0;
             display: flex;
@@ -15,42 +15,59 @@
         }
         .container {
             background-color: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8 16px rgba(0, 0, 0, 0.2);
             width: 80%;
-            max-width: 500px;
+            max-width: 800px;
             text-align: center;
+            transition:0.3s
         }
-        h3 {
-            color: #333333;
+        .container:hover{
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        h1{
+            color: #2c3e50;
+            font-size: 32px;
+            margin-bottom: 20px;
+            font-weight: bold;
         }
         p {
-            color: #666666;
+            color: #34495e;
+            font-size: 20px;
+            margin-bottom: 30px;
+            line-height: 1.6;
         }
         input[type="text"] {
-            width: 80%;
-            padding: 10px;
+            width: 90%;
+            padding: 12px;
             margin: 10px 0;
-            border: 1px solid #cccccc;
-            border-radius: 4px;
+            border: 2px solid #cccccc;
+            border-radius: 6px;
+            font-size: 18px;
         }
         input[type="submit"] {
             background-color: #007BFF;
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
+            padding: 12px 24px;
+            border-radius: 6px;
             cursor: pointer;
+            font-size: 20px;
+            transition: 0.3s;
         }
         input[type="submit"]:hover {
             background-color: #0056b3;
+            transform: scale(1.05);
+        }
+        .button-container{
+            margin-top: 30px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h3>AI Detector Starting Page</h3>
+        <h1>AI Detector Starting Page</h1>
         <p>
            Teacher, enter in a prompt that students have written about. Also enter in the minimum and maximum word count.
         </p>
@@ -59,7 +76,9 @@
             <input name="minWordCount" type="text" placeholder="Enter your min word count here...">
             <input name="maxWordCount" type="text" placeholder="Enter your max word count here...">
             <input name="inputText" type="text" placeholder="Enter in students text here">
-            <input type="submit" value="Submit">
+            <div class = "button-container">
+                <input type="submit" value="Submit">
+            </div> 
         </form>
     </div>
 </body>
