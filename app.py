@@ -18,7 +18,7 @@ lstOfAllDocuments = []
 promptToGenerateResponsesOn = ""
 minimumWordCount = 200
 maximumWordCount = 500
-threshold = 0.95
+threshold = 0.60
 aiGenerated = False
 entryThatMostCloselyMatchesInputText = ""
 aiGeneratedAsAString = ""
@@ -29,6 +29,13 @@ def get_db_connection():
     conn = sqlite3.connect('database.db')
     conn.row_factory = sqlite3.Row
     return conn
+
+def clear_table():
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM textDatabase")
+    conn.commit()
+    conn.close()
 
 #make a route for the first screen that the user sees
 @app.route('/')
@@ -47,7 +54,7 @@ def routeForResults():
         global maximumWordCount
         maximumWordCount = int(request.form.get("maxWordCount"))
         global numberOfResponsesToGenerate
-        numberOfResponsesToGenerate = 10
+        numberOfResponsesToGenerate = 20
 
         global currentStudentGivenText
         global lstOfAllDocuments
@@ -102,6 +109,8 @@ def routeForResults():
         document_vectors = [model.infer_vector(
             word_tokenize(doc.lower())) for doc in lstOfAllDocuments]
         listFormatForDocVectors = [vector.tolist() for vector in document_vectors]
+
+        clear_table()
 
         #insert the vectors and the documents into the database
         conn = get_db_connection()
