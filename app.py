@@ -1,9 +1,6 @@
 #import the required libraries
 from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
-import numpy as np
-import json
-import nltk
 from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 from nltk.tokenize import word_tokenize
 import math
